@@ -1,0 +1,8 @@
+[project]
+name = "ip-address"
+version = "0.1.0"
+requires-python = ">=3.14"
+dependencies = [
+    "dnspython>=2.9.1",
+    "loguru>=0.7.3",
+]

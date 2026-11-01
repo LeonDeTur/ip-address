@@ -1,0 +1,78 @@
+
+name: Sync Fork with Upstream
+
+on:
+  schedule:
+    # Every 24 hours (UTC)
+    - cron: "17 3 * * *"
+
+  # Allow manual execution
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: sync-upstream-main
+  cancel-in-progress: false
+
+jobs:
+  sync:
+    name: Sync main branch
+    runs-on: ubuntu-latest
+
+    if: github.ref == 'refs/heads/main'
+
+    steps:
+      - name: Checkout fork
+        uses: actions/checkout@v7
+        with:
+          ref: main
+          fetch-depth: 0
+
+      - name: Sync with upstream
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          # Automatically detect parent repository
+          UPSTREAM=$(gh api "repos/${GITHUB_REPOSITORY}" \
+            --jq '.parent.full_name')
+
+          if [[ -z "$UPSTREAM" || "$UPSTREAM" == "null" ]]; then
+            echo "::error::Repository is not a GitHub fork"
+            exit 1
+          fi
+
+          echo "Upstream: $UPSTREAM"
+
+          # Configure Git identity
+          git config user.name "github-actions[bot]"
+          git config user.email \
+            "41898282+github-actions[bot]@users.noreply.github.com"
+
+          # Fetch upstream main
+          git remote add upstream \
+            "https://github.com/${UPSTREAM}.git"
+
+          git fetch upstream main
+
+          # Save current commit
+          BEFORE=$(git rev-parse HEAD)
+
+          # Merge upstream changes, preserve fork commits
+          git merge --no-edit upstream/main
+
+          AFTER=$(git rev-parse HEAD)
+
+          if [[ "$BEFORE" == "$AFTER" ]]; then
+            echo "Already up to date"
+            exit 0
+          fi
+
+          # Push synchronized main
+          git push origin HEAD:main
+
+          echo "Successfully synchronized with upstream"
