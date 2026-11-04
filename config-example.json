@@ -1,0 +1,25 @@
+
+{
+  "files": [
+    {
+      "path": "./Global/osm/openstreetmap.bat",
+      "domains": [
+        "openstreetmap.org"
+      ],
+      "mode": "append",
+      "format": "route",
+      "prefix": 24,
+      "gateway": "0.0.0.0"
+    },
+    {
+      "path": "Global/osm/overpass.bat",
+      "domains": [
+        "overpass-turbo.eu"
+      ],
+      "mode": "append",
+      "format": "route",
+      "prefix": 24,
+      "gateway": "0.0.0.0"
+    }
+  ]
+}
